@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.core.database import init_db
 from app.api.main import api_router
+from app.core.rate_limiter import limiter, rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 import os
 
 app = FastAPI(
@@ -10,6 +12,12 @@ app = FastAPI(
     description="API for apartment management system",
     version="1.0.0"
 )
+
+# Add rate limiter state to app
+app.state.limiter = limiter
+
+# Add rate limit exceeded exception handler
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
 # Configure CORS
 import re

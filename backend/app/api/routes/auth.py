@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer
 from sqlmodel import Session, select
 from datetime import timedelta, datetime
 from app.core.database import get_session
 from app.core.security import verify_password, create_access_token, get_password_hash
 from app.core.email import generate_otp, send_reset_password_email
+from app.core.rate_limiter import limiter, get_rate_limit
 from app.models.user import User
 from app.schemas.user import UserLogin, Token, UserCreate, UserResponse
 from app.core.config import settings
@@ -14,7 +16,12 @@ router = APIRouter()
 security = HTTPBearer()
 
 @router.post("/login", response_model=Token)
-async def login(user_login: UserLogin, session: Session = Depends(get_session)):
+@limiter.limit(get_rate_limit("auth_login"))  # 5 requests per minute
+async def login(
+    request: Request,
+    user_login: UserLogin,
+    session: Session = Depends(get_session)
+):
     """Authenticate user and return access token"""
     # Allow login with username or email
     statement = select(User).where(
@@ -43,7 +50,12 @@ async def login(user_login: UserLogin, session: Session = Depends(get_session)):
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post("/register", response_model=UserResponse)
-async def register(user_create: UserCreate, session: Session = Depends(get_session)):
+@limiter.limit(get_rate_limit("auth_register"))  # 10 requests per hour
+async def register(
+    request: Request,
+    user_create: UserCreate,
+    session: Session = Depends(get_session)
+):
     """Register new user"""
     # Check if username already exists
     statement = select(User).where(User.username == user_create.username)
@@ -78,7 +90,22 @@ async def register(user_create: UserCreate, session: Session = Depends(get_sessi
     session.commit()
     session.refresh(user)
     
-    return user
+    # Convert to dict to avoid session issues with rate limiter
+    user_dict = {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "full_name": user.full_name,
+        "phone": user.phone,
+        "role": user.role,
+        "apartment_number": user.apartment_number,
+        "building": user.building,
+        "is_active": user.is_active,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+        "updated_at": user.updated_at.isoformat() if user.updated_at else None
+    }
+    
+    return JSONResponse(content=user_dict, status_code=201)
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(current_user: User = Depends(get_current_user)):
@@ -86,7 +113,9 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
     return current_user
 
 @router.post("/forgot-password")
+@limiter.limit(get_rate_limit("auth_forgot_password"))  # 3 requests per hour
 async def forgot_password(
+    request: Request,
     email: str,
     session: Session = Depends(get_session)
 ):
@@ -96,10 +125,14 @@ async def forgot_password(
     
     # Không tiết lộ email có tồn tại hay không (security best practice)
     if not user:
-        return {"message": "Nếu email tồn tại trong hệ thống, bạn sẽ nhận được mã OTP"}
+        return JSONResponse(
+            content={"message": "Nếu email tồn tại trong hệ thống, bạn sẽ nhận được mã OTP"}
+        )
     
     if not user.is_active:
-        return {"message": "Nếu email tồn tại trong hệ thống, bạn sẽ nhận được mã OTP"}
+        return JSONResponse(
+            content={"message": "Nếu email tồn tại trong hệ thống, bạn sẽ nhận được mã OTP"}
+        )
     
     # Generate OTP (6 số, hết hạn sau 10 phút)
     otp = generate_otp(6)
@@ -120,7 +153,9 @@ async def forgot_password(
             detail="Không thể gửi email. Vui lòng thử lại sau."
         )
     
-    return {"message": "Nếu email tồn tại trong hệ thống, bạn sẽ nhận được mã OTP"}
+    return JSONResponse(
+        content={"message": "Nếu email tồn tại trong hệ thống, bạn sẽ nhận được mã OTP"}
+    )
 
 @router.post("/verify-reset-otp")
 async def verify_reset_otp(

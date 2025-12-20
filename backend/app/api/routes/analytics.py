@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import List, Dict, Any
 from ...core.database import get_session
-from ...core.security import get_current_user
+from ...api.dependencies import get_current_user
 from ...models.user import User
 from ...models.bill import Bill, BillStatus
 from ...models.apartment import Apartment, ApartmentStatus
