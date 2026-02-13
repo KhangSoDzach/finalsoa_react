@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.routes import auth, users, bills, notifications, tickets, services, apartments, vehicles, analytics
+from app.api.routes import auth, users, bills, notifications, tickets, services, apartments, vehicles, analytics, seed
 
 api_router = APIRouter()
 
@@ -12,3 +12,4 @@ api_router.include_router(services.router, prefix="/services", tags=["services"]
 api_router.include_router(apartments.router, prefix="/apartments", tags=["apartments"])
 api_router.include_router(vehicles.router, prefix="/vehicles", tags=["vehicles"])
 api_router.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
+api_router.include_router(seed.router, prefix="/seed", tags=["seed"])
