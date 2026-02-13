@@ -18,7 +18,7 @@ https://apartment-backend-rdcs.onrender.com/health
 
 ### Bước 2: Kiểm tra Seed API
 ```
-https://apartment-backend-rdcs.onrender.com/api/seed/health
+https://apartment-backend-rdcs.onrender.com/api/v1/seed/health
 ```
 
 ### Bước 3: Seed dữ liệu
@@ -26,23 +26,23 @@ https://apartment-backend-rdcs.onrender.com/api/seed/health
 **Option A: Seed tự động (không xóa data cũ)**
 ```bash
 # PowerShell
-Invoke-WebRequest -Uri "https://apartment-backend-rdcs.onrender.com/api/seed/real-data" -Method POST
+Invoke-WebRequest -Uri "https://apartment-backend-rdcs.onrender.com/api/v1/seed/real-data" -Method POST
 ```
 
 Hoặc dùng browser/Postman:
 ```
-POST https://apartment-backend-rdcs.onrender.com/api/seed/real-data
+POST https://apartment-backend-rdcs.onrender.com/api/v1/seed/real-data
 ```
 
 **Option B: Force Seed (xóa & tạo mới)**
 ```bash
 # PowerShell
-Invoke-WebRequest -Uri "https://apartment-backend-rdcs.onrender.com/api/seed/force-real-data?secret=render-seed-2026" -Method POST
+Invoke-WebRequest -Uri "https://apartment-backend-rdcs.onrender.com/api/v1/seed/force-real-data?secret=render-seed-2026" -Method POST
 ```
 
 Hoặc:
 ```
-POST https://apartment-backend-rdcs.onrender.com/api/seed/force-real-data?secret=render-seed-2026
+POST https://apartment-backend-rdcs.onrender.com/api/v1/seed/force-real-data?secret=render-seed-2026
 ```
 
 ### Bước 4: Kiểm tra kết quả

@@ -6,13 +6,13 @@
 
 **Bước 1:** Mở link này trong browser:
 ```
-https://apartment-backend-rdcs.onrender.com/api/seed/health
+https://apartment-backend-rdcs.onrender.com/api/v1/seed/health
 ```
 Đợi 30 giây nếu thấy lỗi (cold start)
 
 **Bước 2:** Sau khi thấy "status: healthy", mở link này:
 ```
-https://apartment-backend-rdcs.onrender.com/api/seed/real-data
+https://apartment-backend-rdcs.onrender.com/api/v1/seed/real-data
 ```
 
 **Thấy "status": "success"** = ✅ XONG!
@@ -25,12 +25,12 @@ Mở PowerShell và chạy:
 
 ```powershell
 # Seed dữ liệu
-Invoke-WebRequest -Uri "https://apartment-backend-rdcs.onrender.com/api/seed/real-data" -Method POST
+Invoke-WebRequest -Uri "https://apartment-backend-rdcs.onrender.com/api/v1/seed/real-data" -Method POST
 ```
 
 **Hoặc Force Seed (xóa và tạo lại):**
 ```powershell
-Invoke-WebRequest -Uri "https://apartment-backend-rdcs.onrender.com/api/seed/force-real-data?secret=render-seed-2026" -Method POST
+Invoke-WebRequest -Uri "https://apartment-backend-rdcs.onrender.com/api/v1/seed/force-real-data?secret=render-seed-2026" -Method POST
 ```
 
 ---
@@ -119,12 +119,12 @@ https://apartment-backend-rdcs.onrender.com/docs
 
 ### 3. Test seed endpoint:
 ```
-https://apartment-backend-rdcs.onrender.com/api/seed/health
+https://apartment-backend-rdcs.onrender.com/api/v1/seed/health
 ```
 
 ### 4. Chạy seed:
 ```
-https://apartment-backend-rdcs.onrender.com/api/seed/real-data
+https://apartment-backend-rdcs.onrender.com/api/v1/seed/real-data
 ```
 
 ### 5. Kiểm tra trong Supabase:
@@ -227,10 +227,10 @@ Supabase > Settings > Database > Download backup
 
 ```bash
 # 1. Seed ngay (browser)
-https://apartment-backend-rdcs.onrender.com/api/seed/real-data
+https://apartment-backend-rdcs.onrender.com/api/v1/seed/real-data
 
 # 2. Hoặc PowerShell
-Invoke-WebRequest -Uri "https://apartment-backend-rdcs.onrender.com/api/seed/real-data" -Method POST
+Invoke-WebRequest -Uri "https://apartment-backend-rdcs.onrender.com/api/v1/seed/real-data" -Method POST
 
 # 3. Database tốt nhất: Supabase (https://supabase.com)
 

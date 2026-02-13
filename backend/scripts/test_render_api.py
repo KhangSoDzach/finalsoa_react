@@ -31,7 +31,7 @@ def test_seed_health():
     """Test seed API health"""
     print("\n🌱 Testing seed API health...")
     try:
-        response = requests.get(f"{BASE_URL}/api/seed/health", timeout=30)
+        response = requests.get(f"{BASE_URL}/api/v1/seed/health", timeout=30)
         print(f"   Status: {response.status_code}")
         if response.status_code == 200:
             data = response.json()
@@ -51,7 +51,7 @@ def seed_real_data():
     """Seed realistic data"""
     print("\n🚀 Seeding realistic data...")
     try:
-        response = requests.post(f"{BASE_URL}/api/seed/real-data", timeout=60)
+        response = requests.post(f"{BASE_URL}/api/v1/seed/real-data", timeout=60)
         print(f"   Status: {response.status_code}")
         if response.status_code == 200:
             data = response.json()
@@ -83,7 +83,7 @@ def force_seed_data(secret="render-seed-2026"):
     
     try:
         response = requests.post(
-            f"{BASE_URL}/api/seed/force-real-data?secret={secret}",
+            f"{BASE_URL}/api/v1/seed/force-real-data?secret={secret}",
             timeout=60
         )
         print(f"   Status: {response.status_code}")
