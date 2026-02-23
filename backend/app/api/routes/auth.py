@@ -1,4 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
+import logging
+
+logger = logging.getLogger(__name__)
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer
 from sqlmodel import Session, select
@@ -23,31 +26,57 @@ async def login(
     session: Session = Depends(get_session)
 ):
     """Authenticate user and return access token"""
-    # Allow login with username or email
-    statement = select(User).where(
-        (User.username == user_login.username) | (User.email == user_login.username)
-    )
-    user = session.exec(statement).first()
-    
-    if not user or not verify_password(user_login.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
+    try:
+        # Allow login with username or email
+        statement = select(User).where(
+            (User.username == user_login.username) | (User.email == user_login.username)
         )
-    
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Inactive user"
+        user = session.exec(statement).first()
+        
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        try:
+            password_valid = verify_password(user_login.password, user.hashed_password)
+        except Exception as pw_err:
+            logger.error(f"Password verification error for user {user_login.username}: {pw_err}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Authentication error: {str(pw_err)}"
+            )
+        
+        if not password_valid:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Inactive user"
+            )
+        
+        access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
+        access_token = create_access_token(
+            data={"sub": user.username}, expires_delta=access_token_expires
         )
+        
+        return {"access_token": access_token, "token_type": "bearer"}
     
-    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
-    access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
-    )
-    
-    return {"access_token": access_token, "token_type": "bearer"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected login error for user {user_login.username}: {type(e).__name__}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Login failed: {type(e).__name__}: {str(e)}"
+        )
 
 @router.post("/register", response_model=UserResponse)
 @limiter.limit(get_rate_limit("auth_register"))  # 10 requests per hour
