@@ -21,7 +21,6 @@ security = HTTPBearer()
 
 
 @router.post("/login", response_model=Token)
-@limiter.limit(get_rate_limit("auth_login"))  # 5 requests per minute
 async def login(
     request: Request,
     user_login: UserLogin,
@@ -81,7 +80,6 @@ async def login(
         )
 
 @router.post("/register", response_model=UserResponse)
-@limiter.limit(get_rate_limit("auth_register"))  # 10 requests per hour
 async def register(
     request: Request,
     user_create: UserCreate,
@@ -144,7 +142,6 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
     return current_user
 
 @router.post("/forgot-password")
-@limiter.limit(get_rate_limit("auth_forgot_password"))  # 3 requests per hour
 async def forgot_password(
     request: Request,
     email: str,
