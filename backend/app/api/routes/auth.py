@@ -18,42 +18,6 @@ from app.api.dependencies import get_current_user
 router = APIRouter()
 security = HTTPBearer()
 
-@router.post("/debug-login")
-async def debug_login(
-    user_login: UserLogin,
-    session: Session = Depends(get_session)
-):
-    """DEBUG ONLY - Remove after debugging. Login without rate limiter."""
-    import traceback
-    try:
-        import bcrypt as bcrypt_lib
-        statement = select(User).where(
-            (User.username == user_login.username) | (User.email == user_login.username)
-        )
-        user = session.exec(statement).first()
-        if not user:
-            return {"error": "User not found", "username": user_login.username}
-        
-        # Test bcrypt
-        try:
-            result = bcrypt_lib.checkpw(user_login.password.encode('utf-8'), user.hashed_password.encode('utf-8'))
-            return {
-                "user_found": True,
-                "bcrypt_works": True,
-                "password_valid": result,
-                "hash_prefix": user.hashed_password[:10],
-                "bcrypt_version": bcrypt_lib.__version__
-            }
-        except Exception as e:
-            return {
-                "user_found": True,
-                "bcrypt_error": str(e),
-                "bcrypt_error_type": type(e).__name__,
-                "hash_prefix": user.hashed_password[:10],
-                "traceback": traceback.format_exc()
-            }
-    except Exception as e:
-        return {"fatal_error": str(e), "type": type(e).__name__, "traceback": traceback.format_exc()}
 
 
 @router.post("/login", response_model=Token)

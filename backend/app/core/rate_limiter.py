@@ -27,16 +27,36 @@ logger = logging.getLogger(__name__)
 def get_client_ip(request: Request) -> str:
     """
     Extract client IP address from request.
-    Handles X-Forwarded-For header for proxies (Vercel, etc.)
+    Handles X-Forwarded-For header for proxies (Render, Vercel, etc.)
+    Returns 'unknown' as fallback to prevent SlowAPI crash.
     """
-    # Try to get IP from X-Forwarded-For header (proxy/load balancer)
-    forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded:
-        # X-Forwarded-For can be comma-separated, take first IP
-        return forwarded.split(",")[0].strip()
-    
-    # Fallback to direct client IP
-    return get_remote_address(request)
+    try:
+        # Try to get IP from X-Forwarded-For header (proxy/load balancer)
+        forwarded = request.headers.get("X-Forwarded-For")
+        if forwarded:
+            # X-Forwarded-For can be comma-separated, take first IP
+            ip = forwarded.split(",")[0].strip()
+            if ip:
+                return ip
+        
+        # Try CF-Connecting-IP (Cloudflare)
+        cf_ip = request.headers.get("CF-Connecting-IP")
+        if cf_ip:
+            return cf_ip.strip()
+        
+        # Try X-Real-IP (Nginx)
+        real_ip = request.headers.get("X-Real-IP")
+        if real_ip:
+            return real_ip.strip()
+        
+        # Fallback to direct client IP (may be None behind proxy)
+        if request.client and request.client.host:
+            return request.client.host
+        
+        # Final fallback - prevent None from crashing SlowAPI
+        return "unknown"
+    except Exception:
+        return "unknown"
 
 
 # Initialize limiter with in-memory storage
